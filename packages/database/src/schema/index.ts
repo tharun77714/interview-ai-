@@ -1,0 +1,2 @@
+// Drizzle schema placeholder
+export {};

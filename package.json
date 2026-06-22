@@ -1,0 +1,22 @@
+{
+  "name": "interview-ai-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "devDependencies": {
+    "prettier": "latest",
+    "turbo": "latest",
+    "typescript": "latest"
+  },
+  "packageManager": "npm@10.8.1"
+}
