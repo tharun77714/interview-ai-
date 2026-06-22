@@ -32,9 +32,9 @@ A modular monolith deployed via Turborepo:
 *   **Interview**: The core event. (Aggregate root for Session context).
 *   **InterviewPlan**: The AI's dynamically generated syllabus.
 *   **TranscriptLine**: Highly denormalized append-only log of the conversation.
-*   **Evaluation**: An LLM-generated score against a specific dimension, with exact quote evidence.
-*   **Report**: The aggregated 0-100 scorecard.
-*   **CoachingFeedback**: Targeted advice explicitly linked to the bottom 2 Evaluations.
+*   **Evaluation**: An LLM-generated score against a specific dimension, with exact quote evidence and a `confidence_score` (0-100).
+*   **Report**: The aggregated 0-100 scorecard, carrying an overall `confidence_score`.
+*   **CoachingFeedback**: Targeted advice (what went wrong, rewrite examples) generated in a secondary LLM chain, explicitly linked to the bottom 2 Evaluations.
 
 ---
 
@@ -47,7 +47,7 @@ A modular monolith deployed via Turborepo:
 6.  **EVALUATING**: Async Evaluation Worker runs Prompt Chains.
 7.  **REPORT_GENERATED**: Scores and Coaching generated. User notified.
 8.  **PROGRESS_UPDATED**: Candidate Memory updated. (Terminal State).
-*(Failure States: `ABORTED` if dropped live. `EVALUATION_FAILED` if worker DLQ'd).*
+*(Failure States: `ABORTED` if dropped live. `EVALUATION_FAILED` if worker DLQ'd. Note: Memory Updates are aborted if the `Report.confidence_score` is below 50% to prevent polluting the math).*
 
 ---
 
@@ -59,6 +59,7 @@ Strict Confidence State Machine protecting user agency:
 *   `CONFIRMED` (Reinstated): Passively detected in 3 consecutive relevant interviews. "Burden of Proof" report shown.
 *   `RESOLVED`: Candidate successfully overcame weakness. Used for praise.
 *   `ARCHIVED`: Double-Dispute Kill Switch triggered, or decayed past 12 months. Dead.
+*   *Implementation Rule*: All memory math requires a strict `UNIQUE(memory_item_id, interview_id)` database constraint. Multiple detections in a single interview must be aggregated into a single boolean detection to prevent falsely triggering the 2-of-3 or 3-consecutive rules.
 
 ---
 
@@ -71,14 +72,15 @@ Strict Confidence State Machine protecting user agency:
 
 ## 7. Evaluation Architecture
 *   **Parallel Dimensions**: Technical (Correctness/Edge cases), Behavioral (STAR method), Communication (Pacing/Clarity).
-*   **Evidence-Based**: No feedback is generated without a `TranscriptLine` quote.
-*   **Confidence Model**: Short interviews (< 2 mins data) trigger `confidence_score: 0` instead of a hallucinated failure.
+*   **Evidence-Based**: No feedback is generated without a `TranscriptLine` quote. The `Evaluation` holds strict evidence; `CoachingFeedback` holds the generative advice.
+*   **Confidence Model**: Short interviews (< 2 mins data) trigger `confidence_score: 0`. Any evaluation with `< 50%` confidence skips memory updates entirely.
 
 ---
 
 ## 8. Event Architecture
 *   `Interview.Requested`, `Interview.Planned`, `Interview.Started`, `Interview.Completed`, `Interview.Aborted`.
 *   `Media.Finalized`: The true trigger for evaluation queues.
+*   `Transcript.Finalized`: Fallback trigger if WebRTC compositing hangs. Forces evaluation on text-only after 3 minutes.
 *   `Evaluation.Failed`, `Report.Generated`.
 *   `Memory.ItemObserved`, `Memory.ItemConfirmed`, `Memory.ItemDisputed`, `Memory.ItemReinstated`, `Memory.ItemResolved`, `Memory.ItemArchived`.
 
@@ -88,7 +90,7 @@ Strict Confidence State Machine protecting user agency:
 *   **Transactional**: `User`, `CandidateProfile`, `Interview`.
 *   **Append-Only**: `TranscriptLine` (flushed in batches, minimal indexing).
 *   **JSONB/Analytical**: `Evaluation`, `Report`, `CoachingFeedback` (LLM schema evolution).
-*   **Retention**: Last 10 COMPLETED interview `.mp4` S3 files. Reports and Progress kept forever. `ABORTED` interviews hard-deleted instantly.
+*   **Retention**: Last 10 COMPLETED interview `.mp4` S3 files. Reports and Progress kept forever. `ABORTED` interviews are delayed by 24 hours for Trust & Safety review, then hard-deleted.
 
 ---
 
