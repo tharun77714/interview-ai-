@@ -8,6 +8,13 @@
       "when": 1782240112882,
       "tag": "0000_first_albert_cleary",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782240476426,
+      "tag": "0001_chubby_microchip",
+      "breakpoints": true
     }
   ]
 }

@@ -19,3 +19,8 @@ export const interviewStateEnum = pgEnum("interview_state", [
   "PROGRESS_UPDATED",
   "EVALUATION_FAILED",
 ]);
+
+export const speakerEnum = pgEnum("speaker_enum", [
+  "AI",
+  "CANDIDATE",
+]);

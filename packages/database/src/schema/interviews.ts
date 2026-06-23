@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, uuid, jsonb, integer, index } from "drizzle-orm/pg-core";
 import { candidateProfiles } from "./profiles";
 import { resumes, jobDescriptions } from "./documents";
-import { interviewStateEnum } from "./enums";
+import { interviewStateEnum, speakerEnum } from "./enums";
 
 export const interviews = pgTable("interviews", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -25,6 +25,7 @@ export const interviewPlans = pgTable("interview_plans", {
     .references(() => interviews.id, { onDelete: "cascade" })
     .unique(),
   syllabus: jsonb("syllabus").notNull(),
+  targetedMemoryItemIds: uuid("targeted_memory_item_ids").array().notNull().default([]), // P0-1 Patch
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -35,7 +36,7 @@ export const transcriptLines = pgTable(
     interviewId: uuid("interview_id")
       .notNull()
       .references(() => interviews.id, { onDelete: "cascade" }),
-    speaker: text("speaker").notNull(), // "AI" | "CANDIDATE"
+    speaker: speakerEnum("speaker").notNull(), // P1-1 Patch
     text: text("text").notNull(),
     timestampStartMs: integer("timestamp_start_ms"),
     timestampEndMs: integer("timestamp_end_ms"),
