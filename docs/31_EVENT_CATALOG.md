@@ -19,6 +19,7 @@ To decouple our architecture, cross-domain communication relies on the following
 
 ## 4. Media Events
 *   `Media.UploadedToS3`: Emitted via AWS/Cloudflare webhook. Acts as a safety gate before `Interview.Completed` can proceed to evaluation.
+*   `Transcript.Finalized` (P0 Patch): Emitted when the real-time engine flushes the final text buffer. If `Media.UploadedToS3` is not received within 3 minutes of this event, a fail-safe cron job MUST force the state to `EVALUATING` and instruct the LLM to grade strictly on text, skipping audio analysis. This prevents the "Infinite Hang" bug if the WebRTC provider crashes.
 
 ## 5. Evaluation Events
 *   `Evaluation.GranularCompleted`: Emitted as parallel LLM jobs finish.

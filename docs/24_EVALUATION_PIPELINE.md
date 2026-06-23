@@ -9,8 +9,8 @@ This document defines the exact sequential orchestration of events from the mome
 *   **Action**: The `Interview` state is updated to `COMPLETED`. The real-time service signals the Media Processor.
 
 ### 2. Media Post-Processing & Transcript Finalization
-*   **Trigger**: Media Processor completes S3 upload.
-*   **Action**: The final buffered `TranscriptLine` records are flushed to the database. The `Interview` record is locked for evaluation.
+*   **Trigger**: Media Processor completes S3 upload (`Media.UploadedToS3`) OR the 3-minute fail-safe timer triggered by `Transcript.Finalized` expires.
+*   **Action**: The final buffered `TranscriptLine` records are flushed to the database. The `Interview` record is locked for evaluation. If triggered by the fail-safe, the pipeline is instructed to skip video analysis.
 *   **Transition**: A job is pushed to the `Evaluation Queue`.
 
 ### 3. Granular Dimension Evaluation (Parallel)

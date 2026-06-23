@@ -32,6 +32,7 @@ To transition a `MemoryItem` from `OBSERVED` to `CONFIRMED`, it must satisfy the
 *   **Threshold**: The weakness must be detected in **2 out of the last 3 interviews**.
 *   **Time Window**: These interviews must occur within a **6-month rolling window**.
 *   **Confidence Logic**: If Interview #1 flags "Weakness in System Design", it enters `OBSERVED`. If Interview #2 is a Behavioral interview, the denominator is ignored (the trait wasn't relevant). If Interview #3 is a Technical interview and flags the same weakness, it is promoted to `CONFIRMED`.
+*   **Single-Interview Aggregation Rule (P0 Patch)**: A single 45-minute interview might test "System Design" 3 separate times across 3 different questions, yielding 3 separate Evaluation quotes. The database MUST enforce a `UNIQUE(memory_item_id, interview_id)` constraint on detections. The Evaluation Worker must aggregate all evidence for a specific trait within a single interview into a *single* `was_detected` boolean before writing. This prevents a single interview from falsely fulfilling the "2 of 3" rule.
 
 ## Part 3: The Dispute & Reinstatement System
 

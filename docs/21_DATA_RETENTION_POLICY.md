@@ -26,3 +26,7 @@ This document defines exactly how data is preserved, pruned, or physically destr
 ## 4. GDPR / CCPA Total Deletion
 *   If a user requests account deletion, a hard delete cascades from `User` -> `CandidateProfile` -> `Interview`. 
 *   An asynchronous worker must be triggered to crawl S3 and destroy all remaining Resumes and Videos tied to that `CandidateProfile`.
+
+## 5. Aborted Interviews (Trust & Safety Review - P2 Patch)
+*   **Policy**: `ABORTED` interviews MUST NOT be hard-deleted instantly. They are retained for 24 hours before a cleanup worker hard-deletes them.
+*   **Rationale**: If `ABORTED` interviews are instantly deleted, candidates can abuse the system by killing the session the moment they receive a difficult question they don't know the answer to, preventing the `Interview` from logging the failure and artificially padding their memory profile. The 24-hour retention window allows backend analytics to track excessive abort rates and apply rate limits or shadow-bans if abuse is detected.

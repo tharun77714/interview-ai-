@@ -9,6 +9,7 @@ Once all parallel `Evaluations` are saved:
 3.  It calculates a weighted `final_score` (0-100). (e.g., For a Technical Interview, Technical Evaluation carries 70% weight, Communication 30%).
 
 ## 2. Coaching Generation (Targeted Feedback)
+*   **Responsibility Separation (P1 Patch)**: The `Evaluation` entity is an objective auditor. It holds the `score`, the `confidence_score`, and the `evidence_quote`. It MUST NOT contain advice, suggestions, or coaching. The `CoachingFeedback` entity is a separate generative layer.
 To avoid overwhelming the candidate, we do not provide coaching for every minor mistake.
 1.  The system identifies the **2 lowest-scoring evaluations** where `score < 75`.
 2.  An specialized Coaching LLM prompt is executed:

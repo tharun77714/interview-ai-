@@ -28,9 +28,15 @@ This document maps the theoretical Domain Entities to their future database pers
 
 ## 5. MemoryItem (Aggregate of CandidateMemory)
 *   **Ownership**: `CandidateProfile`
-*   **Lifecycle**: Created dynamically after interviews in the `OBSERVED` state. Mutates state to `CONFIRMED`, `DISPUTED`, `RESOLVED`, or `ARCHIVED` based on the 3-consecutive-detection reinstatement and double-dispute rules.
+*   **Lifecycle**: Created dynamically after interviews in the `OBSERVED` state. Mutates state to `CONFIRMED`, `DISPUTED`, `RESOLVED`, or `ARCHIVED` based on the 3-consecutive-detection reinstatement and double-dispute rules. Contains `priority_test` flag for manual user request.
 *   **Retention Policy**: Permanent. To track historical growth, even `ARCHIVED` or `RESOLVED` items are retained.
 *   **Deletion Policy**: Hard delete only if `CandidateProfile` is deleted.
+
+## 5b. MemoryDetection (Execution Evidence - P0 Patch)
+*   **Ownership**: Junction of `MemoryItem`, `Interview`, and `Evaluation`.
+*   **Lifecycle**: Created by the Evaluation worker *only if* an intended memory item was successfully evaluated. Enforces `UNIQUE(memory_item_id, interview_id)`.
+*   **Retention Policy**: Permanent. Allows querying "2 of 3" mathematical constraints.
+*   **Deletion Policy**: Cascading hard delete from `Interview` or `MemoryItem`.
 
 ## 6. Interview
 *   **Ownership**: `CandidateProfile`
@@ -53,12 +59,14 @@ This document maps the theoretical Domain Entities to their future database pers
 ## 9. Evaluation
 *   **Ownership**: `Interview`
 *   **Lifecycle**: Generated asynchronously post-interview. Immutable.
+*   **Schema Details (P1 Patch)**: Contains `confidence_score` (0-100) to reject evaluations lacking data. Contains specific evidence quotes.
 *   **Retention Policy**: Permanent.
 *   **Deletion Policy**: Cascading hard delete from `Interview`.
 
 ## 10. Report
 *   **Ownership**: `Interview`
 *   **Lifecycle**: Generated asynchronously post-interview. Immutable.
+*   **Schema Details (P1 Patch)**: Contains `overall_confidence_score` (0-100). If < 50%, candidate memory updates are aborted.
 *   **Retention Policy**: Permanent.
 *   **Deletion Policy**: Cascading hard delete from `Interview`.
 

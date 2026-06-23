@@ -24,6 +24,7 @@ The transcript is fed into distinct, isolated prompts simultaneously:
 ## 3. The Confidence Model (Refusal to Score)
 *   **The Problem**: If the user only spoke for 15 seconds, forcing the AI to evaluate their Technical abilities will result in a hallucinated, arbitrary score.
 *   **The Solution**: The AI is instructed to return `confidence_score: 0` and `score: null` if the data is insufficient. The UI will render this as "Not Enough Data" rather than unfairly failing the candidate.
+*   **Memory Exclusion Rule (P0 Patch)**: If the `overall_confidence_score` of a Report is below 50%, or a specific `Evaluation.confidence_score` is below 50%, the pipeline MUST explicitly abort the Memory Update Flow for those traits. No `memory_detections` rows can be generated for low-confidence evaluations. This prevents aborted interviews from generating false "passes" that corrupt candidate memory math.
 
 ## 4. Scoring Philosophy
 *   **No Flattery**: LLMs inherently default to polite flattery ("You did a great job answering this!"). System prompts must explicitly force a strict, objective, FAANG-level hiring bar.
